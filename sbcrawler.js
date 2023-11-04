@@ -2,19 +2,22 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const fs = require("fs");
 require("dotenv").config();
+const { createClient } = require("@supabase/supabase-js");
+
+const supabaseURL = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+const supabase = createClient(supabaseURL, supabaseKey);
 
 const websites = [
   "https://www.edogs.de/magazin/hunderassen/kleine-hunde/",
   "https://www.edogs.de/magazin/hunderassen/mittelgrosse-hunde/",
   "https://www.edogs.de/magazin/hunderassen/grosse-hunde/",
 ];
-
-const little_dogs = [];
-const middle_dogs = [];
-const big_dogs = [];
+const dogs = [];
 
 for (let i = 0; i < websites.length; i++) {
-  axios(websites[i]).then(async (response) => {
+  axios(websites[i]).then((response) => {
     const data = response.data;
     const $ = cheerio.load(data);
     const links = [];
@@ -25,7 +28,7 @@ for (let i = 0; i < websites.length; i++) {
     });
 
     links.forEach(async (link) => {
-      await axios(link).then((res) => {
+      await axios(link).then(async (res) => {
         const webData = res.data;
         const $ = cheerio.load(webData);
 
@@ -54,26 +57,19 @@ for (let i = 0; i < websites.length; i++) {
           character: facts[9],
         };
 
-        dogs.push(dogObj);
-
         if (i === 0) {
           dogObj.category = "kleine Hunde";
-          little_dogs.push(dogObj);
-          fs.writeFileSync(
-            "little_dogs.json",
-            JSON.stringify(little_dogs, null, 2)
-          );
         } else if (i === 1) {
           dogObj.category = "mittelgroße Hunde";
-          middle_dogs.push(dogObj);
-          fs.writeFileSync(
-            "middle_dogs.json",
-            JSON.stringify(middle_dogs, null, 2)
-          );
         } else if (i === 2) {
           dogObj.category = "große Hunde";
-          big_dogs.push(dogObj);
-          fs.writeFileSync("big_dogs.json", JSON.stringify(big_dogs, null, 2));
+        }
+        dogs.push(dogObj);
+        try {
+          const { error } = await supabase.from("dogs").insert(dogs);
+          if (error) throw error;
+        } catch (error) {
+          console.error("Error: ", error.message);
         }
       });
     });
