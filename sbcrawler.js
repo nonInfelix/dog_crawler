@@ -14,7 +14,7 @@ const websites = [
   "https://www.edogs.de/magazin/hunderassen/mittelgrosse-hunde/",
   "https://www.edogs.de/magazin/hunderassen/grosse-hunde/",
 ];
-const dogs = [];
+let dogs = [];
 
 for (let i = 0; i < websites.length; i++) {
   axios(websites[i]).then((response) => {
@@ -64,6 +64,7 @@ for (let i = 0; i < websites.length; i++) {
         } else if (i === 2) {
           dogObj.category = "große Hunde";
         }
+        dogs = [];
         dogs.push(dogObj);
         try {
           const { error } = await supabase.from("dogs").insert(dogs);
