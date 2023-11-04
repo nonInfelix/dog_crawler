@@ -1,6 +1,13 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 const fs = require("fs");
+require("dotenv").config();
+const { createClient } = require("@supabase/supabase-js");
+
+const supabaseURL = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+const supabase = createClient(supabaseURL, supabaseKey);
 
 const websites = [
   "https://www.edogs.de/magazin/hunderassen/kleine-hunde/",
@@ -30,7 +37,7 @@ try {
           const $ = cheerio.load(webData);
 
           let facts = [];
-          $("td:not(.rowHead)")
+          $("td:not(.rowHead):not(.rowTitle)")
             .slice(0, 10)
             .each(function () {
               const fact = $(this).text();
@@ -54,18 +61,21 @@ try {
             character: facts[9],
           };
           if (i === 0) {
+            dogObj.category = "kleine Hunde";
             little_dogs.push(dogObj);
             fs.writeFileSync(
               "little_dogs.json",
               JSON.stringify(little_dogs, null, 2)
             );
           } else if (i === 1) {
+            dogObj.category = "mittelgroße Hunde";
             middle_dogs.push(dogObj);
             fs.writeFileSync(
               "middle_dogs.json",
               JSON.stringify(middle_dogs, null, 2)
             );
           } else if (i === 2) {
+            dogObj.category = "große Hunde";
             big_dogs.push(dogObj);
             fs.writeFileSync(
               "big_dogs.json",
